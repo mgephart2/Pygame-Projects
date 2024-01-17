@@ -17,28 +17,33 @@ class Board(Block):
     
     #Sets up the game board
     def populate_array(self, difficulty):
+        #Initialize 1D game array on easy
         if difficulty == 1:
             self.values = [0] * 13
             self.cell_visibility = [False] * 16
             for i in range(3):
                 self.values.append(9)
             self.font = pygame.font.SysFont("Arial", 88)
+        #Initialize 1D game array on medium
         elif difficulty == 2:
             self.values = [0] * 54
             self.cell_visibility = [False] * 64
             for i in range(10):
                 self.values.append(9)
             self.font = pygame.font.SysFont("Arial", 35)
+        #Initialize 1D game array on hard
         elif difficulty == 3:
             self.values = [0] * 80
             self.cell_visibility = [False] * 100
             for i in range(20):
                 self.values.append(9)
             self.font = pygame.font.SysFont("Arial", 35)
+        #randomize bomb locations and initialize helpful variables
         random.shuffle(self.values)
         self.sqrt_len = int(math.sqrt(len(self.values)))
         self.grid_size = screen_width//self.sqrt_len
         rows = []
+        #Converts 1D game array to 2D game array
         for i in range(self.sqrt_len+2):
             row = [0] * (self.sqrt_len+2)
             rows.append(row)
@@ -46,6 +51,7 @@ class Board(Block):
         for i in range(len(self.values)):
             rows[(i//self.sqrt_len)+1][(i%self.sqrt_len)+1] = self.values[i]
 
+        #Populates the game array with the appropriate values next to bombs
         for i in range(len(self.values)):
             if rows[(i//self.sqrt_len)+1][(i%self.sqrt_len)+1] != 9:
                 if rows[(i//self.sqrt_len)][i%self.sqrt_len] == 9:
@@ -65,6 +71,7 @@ class Board(Block):
                 if rows[(i//self.sqrt_len)+2][(i%self.sqrt_len)+2] == 9:
                     rows[(i//self.sqrt_len)+1][(i%self.sqrt_len)+1] += 1
         
+        #Convert back form 2D array to 1D array
         for i in range(len(self.values)):
             self.values[i] = rows[(i//self.sqrt_len)+1][(i%self.sqrt_len)+1]
 
@@ -86,13 +93,17 @@ class GameManager:
         x = screen_width/board.sqrt_len
         y = screen_height/board.sqrt_len
         for i in range(len(board.values)):
+            #Identifies which cell is being clicked
             if mouse_pos[0] < x and mouse_pos[0] > x-(screen_width/board.sqrt_len):
                 if mouse_pos[1] < y and mouse_pos[1] > y-(screen_height/board.sqrt_len):
+                    #Left click not on a bomb or flag
                     if button == 1 and board.values[i] < 10:
                         board.cell_visibility[i] = True
+                    #Right click to place flag
                     elif button == 3 and board.values[i] < 10 and board.cell_visibility[i] == False:
                         board.values[i] += 10
                         board.cell_visibility[i] = True
+                    #Right click to remove flag
                     elif button == 3 and board.values[i] >= 10:
                         board.cell_visibility[i] = False
                         board.values[i] -= 10
@@ -102,6 +113,7 @@ class GameManager:
                 x = screen_width/board.sqrt_len
                     
     def draw_board(self):
+        #Draws grid
         for x in range(0, screen_width, board.grid_size):
             pygame.draw.line(screen, line_color, (x, 0), (x, screen_height))
         for y in range(0, screen_height, board.grid_size):
@@ -110,17 +122,21 @@ class GameManager:
         x = (screen_width/board.sqrt_len)/2
         y = (screen_height/board.sqrt_len)/2
         lose = False
+        #Draws values on revealed cells
         for i in range(len(board.cell_visibility)):
             if board.cell_visibility[i]:
+                #Draws numbers
                 if board.values[i] < 9:
                     cell_value = board.font.render(str(board.values[i]), True, text_color)
                     cell_value_rect = cell_value.get_rect(center = (x, y))
                     screen.blit(cell_value, cell_value_rect)
+                #Draws bomb
                 if board.values[i] == 9:
                     bomb = Bomb('bomb.png', x, y)
                     bomb_sprite.add(bomb)
                     self.bomb_sprite.draw(screen)
                     lose = True
+                #Draws flag
                 if board.values[i] > 9:
                     cell_value = board.font.render(str("F"), True, flag_color)
                     cell_value_rect = cell_value.get_rect(center = (x, y))
@@ -132,12 +148,15 @@ class GameManager:
                 y += (screen_height/board.sqrt_len)
             if y >= screen_height:
                 y = (screen_height/board.sqrt_len)/2
+        #Checks is bomb was clicked
         if lose:
             self.game_over()
+        #Checks if win condition is reached
         if self.check_win():
             self.win()
 
     def start_game(self):
+        #Displays start menu
         screen.fill('grey81')
 
         title = title_font.render(str('Minesweeper'), True, text_color)
@@ -184,6 +203,7 @@ class GameManager:
             clock.tick(120)
     
     def game_over(self):
+        #Displays lose menu
         lose_text = menu_font.render(str('You blew up!'), True, lose_color)
         lose_text_rect = lose_text.get_rect(center = (screen_width/2, 75))
         screen.blit(lose_text, lose_text_rect)
@@ -218,6 +238,7 @@ class GameManager:
             clock.tick(120)
     
     def check_win(self):
+        #Win condition: All cells have been revealed with flags on all bombs
         for i in range(len(board.values)):
             if board.cell_visibility[i] == False:
                 return False
@@ -226,6 +247,7 @@ class GameManager:
         return True
 
     def win(self):
+        #Displays win menu
         win_text = menu_font.render(str('You won!'), True, win_color)
         win_text_rect = win_text.get_rect(center = (screen_width/2, 75))
         screen.blit(win_text, win_text_rect)
