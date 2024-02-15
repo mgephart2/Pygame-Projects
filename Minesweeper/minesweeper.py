@@ -38,7 +38,7 @@ class Board(Block):
             for i in range(20):
                 self.values.append(9)
             self.font = pygame.font.SysFont("Arial", 35)
-        #randomize bomb locations and initialize helpful variables
+        #Randomize bomb locations and initialize helpful variables
         random.shuffle(self.values)
         self.sqrt_len = int(math.sqrt(len(self.values)))
         self.grid_size = screen_width//self.sqrt_len
