@@ -3,14 +3,16 @@ import pygame, sys, random, asyncio
 class Block(pygame.sprite.Sprite):
     def __init__(self, path, x_pos, y_pos):
         super().__init__()
-        self.image = pygame.image.load(path)
+        self.image = pygame.image.load(path).convert_alpha()
         self.rect = self.image.get_rect(center = (x_pos, y_pos))
+        
 
 class Player(Block):
     def __init__(self, path, x_pos, y_pos):
         super().__init__(path, x_pos, y_pos)
         self.gravity = 0
         self.inAir = False
+        self.mask = pygame.mask.from_surface(self.image)
     
     def constrain(self):
         if self.rect.bottom > screen_height/1.5:
@@ -21,7 +23,7 @@ class Player(Block):
     
     def update(self):
         self.rect.y += self.gravity
-        self.gravity += 0.3
+        self.gravity += GRAVITY
         self.constrain()
 
 class Spike(Block):
@@ -30,6 +32,7 @@ class Spike(Block):
         self.x_speed = -2
         self.player = player
         self.active = False
+        self.mask = pygame.mask.from_surface(self.image)
     
     def update(self):
         if self.rect.bottom > screen_height/1.5:
@@ -40,9 +43,10 @@ class Spike(Block):
             self.collisions()
 
     def collisions(self):
-        if pygame.sprite.spritecollide(self, self.player, False):
-            collision_player = pygame.sprite.spritecollide(self, self.player, False)[0].rect
-            if abs(self.rect.left == collision_player.right) < 10 or abs(self.rect.top == collision_player.bottom) < 10:
+        rect_collide = pygame.sprite.spritecollide(self, self.player, False)
+        mask_collide = pygame.sprite.spritecollide(self, self.player, False, pygame.sprite.collide_mask)
+        if rect_collide:
+            if mask_collide:
                 self.x_speed = 0
                 player.y_speed = 0
                 pygame.mixer.Sound.play(crash_sound)
@@ -50,7 +54,7 @@ class Spike(Block):
 
     def reset_spike(self):
         self.rect.center = (screen_width/1.5, screen_height/1.5)
-        self.x_speed = random.choice((-2, -2.5, -3, -3.5, -4))
+        self.x_speed = random.choice(SPIKE_SPEEDS)
 
 class GameManager:
     def __init__(self, player_sprite, spike_sprite):
@@ -149,10 +153,12 @@ no_option_font = pygame.font.SysFont("Arial", 40)
 player = Player('./assets/bunny.png', screen_width/4, screen_height/1.5)
 player_sprite = pygame.sprite.GroupSingle()
 player_sprite.add(player)
+GRAVITY = 0.3
 
 spike = Spike('./assets/spike.png', screen_width/1.5, screen_height/1.5, 1, player_sprite)
 spike_sprite = pygame.sprite.GroupSingle()
 spike_sprite.add(spike)
+SPIKE_SPEEDS = (-2, -2.5, -3, -3.5, -4)
 
 game_manager = GameManager(player_sprite, spike_sprite)
 
