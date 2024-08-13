@@ -15,8 +15,8 @@ class Player(Block):
         self.mask = pygame.mask.from_surface(self.image)
     
     def constrain(self):
-        if self.rect.bottom > screen_height/1.5:
-            self.rect.bottom = screen_height/1.5
+        if self.rect.bottom > asset_height:
+            self.rect.bottom = asset_height
             self.inAir = False
         else:
             self.inAir = True
@@ -35,8 +35,8 @@ class Spike(Block):
         self.mask = pygame.mask.from_surface(self.image)
     
     def update(self):
-        if self.rect.bottom > screen_height/1.5:
-            self.rect.bottom = screen_height/1.5
+        if self.rect.bottom > asset_height:
+            self.rect.bottom = asset_height
         
         self.rect.x += self.x_speed
         if game_manager.game_state == 'playing':
@@ -53,7 +53,7 @@ class Spike(Block):
                 game_manager.game_over()
 
     def reset_spike(self):
-        self.rect.center = (screen_width/1.5, screen_height/1.5)
+        self.rect.center = (spike_width, asset_height)
         self.x_speed = random.choice(SPIKE_SPEEDS)
 
 class GameManager:
@@ -86,7 +86,7 @@ class GameManager:
         screen.blit(high_score, high_score_rect)
     
     def reset_spike(self):
-        if self.spike_sprite.sprite.rect.left <= 0:
+        if self.spike_sprite.sprite.rect.right <= 0:
             self.score += 1
             self.spike_sprite.sprite.reset_spike()
         
@@ -109,12 +109,12 @@ class GameManager:
         self.draw_score()
 
     def restart_game(self):
-        player.rect.top = screen_width/4
-        player.rect.bottom = screen_height/1.5
+        player.rect.top = player_width
+        player.rect.bottom = asset_height
         player.gravity = 0
 
-        spike.rect.left = screen_width/1.5
-        spike.rect.bottom = screen_height/1.5
+        spike.rect.left = spike_width
+        spike.rect.bottom = asset_height
         spike.x_speed = -2
 
         if self.score > self.high_score:
@@ -135,12 +135,15 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Bunny Hop')
 
 # Global Variables
-bg_color = pygame.Color('deepskyblue1')
+background = pygame.image.load('./assets/background.png').convert_alpha()
+background = pygame.transform.scale(background, (screen_width, screen_height))
 floor_color = pygame.Color('springgreen')
 text_color = pygame.Color('black')
 jump_sound = pygame.mixer.Sound("./assets/jump.wav")
 crash_sound = pygame.mixer.Sound("./assets/crash.wav")
-floor = pygame.Rect(0, screen_height/1.5, screen_width, screen_height)
+player_width = (screen_width/4)+50
+spike_width = (screen_width/1.5)+50
+asset_height = (screen_height/1.5)+19
 
 # Game Fonts
 basic_font = pygame.font.SysFont("Arial", 32)
@@ -150,12 +153,12 @@ yes_option_font = pygame.font.SysFont("Arial", 40)
 no_option_font = pygame.font.SysFont("Arial", 40)
 
 # Game Objects
-player = Player('./assets/bunny.png', screen_width/4, screen_height/1.5)
+player = Player('./assets/bunny.png', player_width, asset_height)
 player_sprite = pygame.sprite.GroupSingle()
 player_sprite.add(player)
 GRAVITY = 0.3
 
-spike = Spike('./assets/spike.png', screen_width/1.5, screen_height/1.5, 1, player_sprite)
+spike = Spike('./assets/spike.png', spike_width, asset_height, 1, player_sprite)
 spike_sprite = pygame.sprite.GroupSingle()
 spike_sprite.add(spike)
 SPIKE_SPEEDS = (-2, -2.5, -3, -3.5, -4)
@@ -182,8 +185,8 @@ async def main():
                         sys.exit()
 
         # Background
-        screen.fill(bg_color)
-        pygame.draw.rect(screen, floor_color, floor)
+        #screen.fill(bg_color)
+        screen.blit(background, (0, 0))
 
         # Run the game logic
         game_manager.run_game()
