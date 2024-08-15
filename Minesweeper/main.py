@@ -43,8 +43,6 @@ class Board(Block):
         self.sqrt_len = int(math.sqrt(len(self.values)))
         self.grid_size = screen_width//self.sqrt_len
         rows = []
-        # x = i//self.sqrt_len
-        # y = i%self.sqrt_len
         #Converts 1D game array to 2D game array
         for i in range(self.sqrt_len+2):
             row = [0] * (self.sqrt_len+2)
